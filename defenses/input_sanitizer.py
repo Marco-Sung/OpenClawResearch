@@ -6,6 +6,8 @@ import re
 
 # ── INJECTION PATTERNS ────────────────────────────────────────────
 
+SEP = r"[\s\-\.,_]+"
+
 INJECTION_PATTERNS = [
     r"ignore\s+(all\s+)?previous\s+instructions",
     r"you\s+are\s+now",
@@ -15,9 +17,9 @@ INJECTION_PATTERNS = [
     r"without\s+question",
     r"comply\s+with\s+all",
     r"pre\-?approved",
-    r"authorized\s+(to\s+)?(shar(e|ing))",
-    r"no\s+further\s+verification",
-    r"forward[\s\-\.]+(your[\s\-\.]+)?.*credentials",   # now catches hyphens/periods too
+    rf"authorized{SEP}(to{SEP})?(shar(e|ing))",
+    rf"(no|without){SEP}further{SEP}verification",
+    r"forward[\s\-\.]+(your[\s\-\.]+)?.*credentials",
     r"send[\s\-\.]+(your[\s\-\.]+)?.*password",
     r"verify[\s\-\.]+.*api",
     r"output\s+your\s+system\s+prompt",
@@ -26,8 +28,22 @@ INJECTION_PATTERNS = [
     r"maintenance\s+mode",
     r"developer\s+mode",
     r"ignore\s+your\s+(soul|identity|values)",
-    r"create\s+a\s+.*cron\s*job",          # catches automated exfiltration setup
-    r"do\s+not\s+tell\s+the\s+user",       # catches secrecy instructions
+    r"create\s+a\s+.*cron\s*job",
+    r"do\s+not\s+tell\s+the\s+user",
+    # structural exfil rule: any send-like verb within 200 chars of an email
+    # address, regardless of what noun is being sent -- closes the
+    # hard_soul_overwrite gap (which never says "credentials")
+    r"(forward|send|email|share)[\s\S]{0,200}[\w.+-]+@[\w-]+\.[\w.-]+",
+    # narrow stopgap for medium_fake_professor_schedule_change -- see the
+    # module docstring in the pipeline notes re: this being a content-level
+    # injection that regex can't really solve, not a syntax-level one
+    rf"notify{SEP}all{SEP}(students|users){SEP}immediately",
+    r"(authorized|greenlit|cleared|signed\s+off\s+on|approved)\s+(?:\S+\s+){0,3}shar(e|ing)",
+    r"(forward|send|email|share|deliver|reach|route|relay|sync)[\s\S]{0,200}[\w.+\-]+@[\w-]+\.[\w.-]+",
+    r"(set\s+up|create|schedule)[\s\S]{0,60}(recurring|daily|automated)[\s\S]{0,60}(task|job|summary)",
+    r"(quietly|without\s+flagging|don'?t\s+mention|no\s+need\s+to\s+(announce|mention))",
+    r"(notify|tell|let)\s+(each|all)\s+(student|user)s?\s+[\s\S]{0,40}(immediately|as\s+soon\s+as\s+possible|right\s+away)",
+    r"credentials?\s+(need|require)[\s\S]{0,20}(refresh|updat|renew|re-?enter)",
 ]
 
 # ── PROTECTED FILES ───────────────────────────────────────────────
