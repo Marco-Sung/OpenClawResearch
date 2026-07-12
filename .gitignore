@@ -4,3 +4,21 @@ __pycache__/
 .pytest_cache/
 attack_log.json
 .env
+# -- generated attack artifacts (rebuilt every transport run) --
+tests/channels/harness/out/
+tests/channels/harness/dropbox/
+ 
+# -- python cruft --
+*.py[cod]
+.venv/
+*.egg-info/
+ 
+# -- secrets: NEVER commit tokens/PATs --
+.env.*
+*.pat
+*token*
+secrets*
+credentials*
+ 
+# -- mailpit data (only if you add a persistent volume) --
+mailpit-data/

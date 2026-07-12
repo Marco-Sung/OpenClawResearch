@@ -1,0 +1,23 @@
+
+# Delivery layer for the injection harness. Only the mail channel needs a
+# container; web + file are local processes / directories.
+#
+#   docker compose up -d      # start Mailpit
+#   docker compose down       # tear down
+#
+# UI:    http://localhost:8025   SMTP: :1025   POP3: :1110
+#
+# Mailpit only starts POP3 when POP3 auth is set. If POP3 won't come up,
+# run `docker run --rm axllent/mailpit -h | grep -i pop3` to confirm the
+# current flag/env name, or use the REST API fallback in receive.py.
+services:
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "1110:1110"
+      - "8025:8025"
+    environment:
+      MP_POP3_AUTH: "test:test"
+ 
