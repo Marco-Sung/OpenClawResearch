@@ -5,10 +5,10 @@ how the payload is produced does.
 """
 from __future__ import annotations
  
-from tests.channels.parsers.extractors import extract
-from tests.channels.parsers.file_extractors import extract_file
-from tests.channels.harness import build, deliver, receive
-from tests.channels.harness.file_parsers import parse_file_bytes
+from tests.extraction.text import extract
+from tests.extraction.files import extract_file
+from tests.transport import build, deliver, receive
+from tests.transport.received_files import parse_file_bytes
  
 WEB_URL = "http://127.0.0.1:8080"
  
@@ -24,7 +24,7 @@ def extract_direct(attack: dict, strategy: str | None) -> str:
  
 def extract_transport(attack: dict, strategy: str | None) -> str:
     """Build the artifact, push it through a channel, receive it back, then
-    parse. Requires the relevant server to be running (see README_harness)."""
+    parse. Requires the relevant server to be running (see README)."""
     if "raw" in attack:
         kind = attack.get("extract_kind", "html")
         if kind == "html":
@@ -41,13 +41,17 @@ def extract_transport(attack: dict, strategy: str | None) -> str:
             return extract(raw.decode(errors="replace"), "html", strategy)
         # email: attack["raw"] is already a full MIME message
         receive.reset_mailbox()          # <- clear leftover mail first
-        deliver.deliver_email_raw(attack["raw"])
+        # Opt-in: attacks can set "email_encoding": "iso-8859-1" to send the
+        # message as real non-UTF-8 bytes over SMTP, even though direct mode
+        # keeps parsing attack["raw"] as a clean, correctly-decoded string.
+        # Same idea as "web_encoding" above, applied to the email channel.
+        enc = attack.get("email_encoding")
+        if enc:
+            deliver.deliver_email_raw(attack["raw"].encode(enc, errors="replace"))
+        else:
+            deliver.deliver_email_raw(attack["raw"])
         raw = receive.receive_email()
-        # TEMPORARY DIAGNOSTIC — remove once confirmed:
-        decoded = raw.decode(errors="replace")
-        fetched_subject = decoded.split("Subject:")[1].splitlines()[0].strip() if "Subject:" in decoded else "(none found)"
-        print(f"    [DEBUG] attack={attack['name']!r} fetched_subject={fetched_subject!r}")
-        return extract(decoded, "email", strategy)
+        return extract(raw.decode(errors="replace"), "email", strategy)
  
     if "spec" in attack:
         fmt = (strategy or "txt").split("_")[0]        # pdf / docx / txt

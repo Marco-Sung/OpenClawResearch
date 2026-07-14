@@ -1,6 +1,6 @@
 """Parse-from-BYTES file extractors, for transport mode.
  
-Your file_extractors.py builds an artifact from a spec and parses it in one
+Your extraction/files.py builds an artifact from a spec and parses it in one
 call -- fine for direct mode, but transport hands you the bytes of a file that
 already crossed a channel, with no spec to look at. These mirror the same
 strategy names so `attack["extract"]` lines up 1-to-1.

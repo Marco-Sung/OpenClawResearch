@@ -12,15 +12,15 @@ from defenses.input_sanitizer import safe_write, WorkspaceWriteRequest
 from pydantic import ValidationError
 from tools.workspace_switcher import switch_to_test, switch_to_real
  
-from tests.core.core_attacks import ATTACKS as CORE_ATTACKS, BENIGN_TASKS as CORE_BENIGN_TASKS
-from tests.channels.email.payloads import EMAIL_ATTACKS
-from tests.channels.web.payloads import WEB_ATTACKS
-from tests.channels.file.payloads import FILE_ATTACKS
-from tests.channels.parsers.extractors import extract
-from tests.channels.parsers.file_extractors import extract_file, FILE_EXTRACTORS
+from tests.attacks.core import ATTACKS as CORE_ATTACKS, BENIGN_TASKS as CORE_BENIGN_TASKS
+from tests.attacks.email import EMAIL_ATTACKS
+from tests.attacks.web import WEB_ATTACKS
+from tests.attacks.file import FILE_ATTACKS
+from tests.extraction.text import extract
+from tests.extraction.files import extract_file, FILE_EXTRACTORS
  
 # NEW: transport harness (build -> deliver -> receive -> parse)
-from tests.channels.harness import pipeline
+from tests.transport import pipeline
  
 # -- PATHS ---------------------------------------------------------
  
@@ -277,7 +277,7 @@ def compare_extractors(channel="web", mode="direct"):
         print(f"\n  No extractable attacks in '{channel}' - nothing to compare.\n")
         return
  
-    from tests.channels.parsers.extractors import HTML_EXTRACTORS, EMAIL_EXTRACTORS
+    from tests.extraction.text import HTML_EXTRACTORS, EMAIL_EXTRACTORS
  
     print(f"\n{'='*78}")
     print(f"  EXTRACTOR COMPARISON -- {channel}   (mode: {mode})")
@@ -367,7 +367,7 @@ Usage:
   transport = build -> deliver -> receive -> parse over a real channel.
               Start servers first:
                 docker compose up -d
-                python tests/channels/harness/servers/web/serve.py
+                python tests/transport/server.py
  
 Example:
   python -m tests.research_runner after   web  transport

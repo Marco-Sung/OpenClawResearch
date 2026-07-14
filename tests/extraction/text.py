@@ -1,4 +1,4 @@
-# tests/channels/parsers/extractors.py
+# tests/extraction/text.py
 #
 # Text-extraction layer. This is the step a REAL email/web connector
 # performs BEFORE any content reaches your sanitizer: turning raw MIME

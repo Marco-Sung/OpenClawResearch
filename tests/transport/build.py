@@ -72,6 +72,17 @@ def build_html(html: str, name: str) -> Path:
     path = _out("web", name, "html")
     path.write_text(html, encoding="utf-8")
     return path
+
+def build_html_encoded(html: str, name: str, encoding: str = "iso-8859-1") -> Path:
+    """Write the SAME html string but encode it as bytes in something other
+    than UTF-8. pipeline.py's transport branch hardcodes decode(errors="replace")
+    assuming UTF-8 -- if the actual bytes on disk are a different encoding,
+    the decode mangles non-ASCII characters into the U+FFFD replacement
+    character. Direct mode never touches bytes at all, so it sees the
+    original string perfectly intact -- that asymmetry IS the divergence."""
+    path = _out("web", name, "html")
+    path.write_bytes(html.encode(encoding, errors="replace"))
+    return path
  
  
 def build_eml(visible: str, name: str, html: str | None = None,

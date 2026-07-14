@@ -5,8 +5,8 @@ __pycache__/
 attack_log.json
 .env
 # -- generated attack artifacts (rebuilt every transport run) --
-tests/channels/harness/out/
-tests/channels/harness/dropbox/
+tests/transport/out/
+tests/transport/dropbox/
  
 # -- python cruft --
 *.py[cod]

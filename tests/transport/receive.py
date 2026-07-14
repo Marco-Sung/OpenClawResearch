@@ -62,7 +62,7 @@ def receive_web(url: str) -> bytes:
             return r.read()
     except urllib.error.URLError as e:
         raise ServerDown(f"Web server not reachable for {url} -- run "
-                         f"`python tests/channels/harness/servers/web/serve.py`.") from e
+                         f"`python tests/transport/server.py`.") from e
  
  
 def receive_file(name: str) -> bytes:

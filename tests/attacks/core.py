@@ -1,4 +1,4 @@
-# tests/core/core_attacks.py
+# tests/attacks/core.py
 #
 # Your original attack payloads, extracted from research_runner.py so
 # the runner itself can stay channel-agnostic. Unchanged from what you

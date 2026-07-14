@@ -1,15 +1,15 @@
 """Dependency-free web server (stdlib). Serves the built HTML fixtures in
-../../out/web over HTTP, so the web connector fetches a real URL instead of a
+./out/web over HTTP, so the web connector fetches a real URL instead of a
 Python string. Leave it running in its own shell:
  
-    python tests/channels/harness/servers/web/serve.py
+    python tests/transport/server.py
 """
 import functools
 import http.server
 import socketserver
 from pathlib import Path
  
-ROOT = Path(__file__).resolve().parents[2] / "out" / "web"
+ROOT = Path(__file__).resolve().parent / "out" / "web"
 PORT = 8080
  
 if __name__ == "__main__":

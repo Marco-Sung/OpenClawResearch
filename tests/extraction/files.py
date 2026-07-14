@@ -1,6 +1,6 @@
-# tests/channels/parsers/file_extractors.py
+# tests/extraction/files.py
 #
-# Text-extraction layer for the FILE channel, parallel to extractors.py
+# Text-extraction layer for the FILE channel, parallel to text.py
 # (which handles html/email). A file connector's job is the same as an
 # email/web connector's: turn a file's bytes into the plain-text string
 # the sanitizer then validates. And like those, the EXTRACTION CHOICE
