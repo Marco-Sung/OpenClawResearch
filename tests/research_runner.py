@@ -13,9 +13,9 @@ from pydantic import ValidationError
 from tools.workspace_switcher import switch_to_test, switch_to_real
  
 from tests.attacks.core import ATTACKS as CORE_ATTACKS, BENIGN_TASKS as CORE_BENIGN_TASKS
-from tests.attacks.email import EMAIL_ATTACKS
-from tests.attacks.web import WEB_ATTACKS
-from tests.attacks.file import FILE_ATTACKS
+from tests.attacks.email import EMAIL_ATTACKS, EMAIL_BENIGN
+from tests.attacks.web import WEB_ATTACKS, WEB_BENIGN
+from tests.attacks.file import FILE_ATTACKS, FILE_BENIGN
 from tests.extraction.text import extract
 from tests.extraction.files import extract_file, FILE_EXTRACTORS
  
@@ -40,6 +40,10 @@ ATTACK_SETS = {
  
 BENIGN_SETS = {
     "core": CORE_BENIGN_TASKS,
+    "email": EMAIL_BENIGN,
+    "web": WEB_BENIGN,
+    "file": FILE_BENIGN,
+    "all": CORE_BENIGN_TASKS + EMAIL_BENIGN + WEB_BENIGN + FILE_BENIGN,
 }
  
 MODES = {"direct", "transport"}
@@ -100,11 +104,11 @@ def reset_workspace_test():
     shutil.copytree(REAL_WORKSPACE, TEST_WORKSPACE)
     print(f"  ok workspace_test reset to clean state")
  
-def run_benign_tests(channel="core"):
+def run_benign_tests(channel="core", mode="direct"):
     benign_tasks = BENIGN_SETS.get(channel, CORE_BENIGN_TASKS)
  
     print(f"\n{'='*60}")
-    print(f"  BENIGN TASK TESTING -- false positive check ({channel})")
+    print(f"  BENIGN TASK TESTING -- false positive check ({channel}, mode={mode})")
     print(f"{'='*60}\n")
  
     switch_to_test()
@@ -114,18 +118,29 @@ def run_benign_tests(channel="core"):
     false_positives = 0
  
     for task in benign_tasks:
-        result = safe_write(task["target"], task["content"], task["source"])
+        # Channel benign tasks (email/web/file) carry raw/spec and run
+        # through the SAME extractor path as attacks; core benign tasks
+        # carry a plain "content" string. Either way the resulting text
+        # is what safe_write() sees.
+        if "raw" in task or "spec" in task:
+            content = produce_payload(task, mode)
+            note = extract_note(task, mode)
+        else:
+            content = task["content"]
+            note = ""
+
+        result = safe_write(task["target"], content, task.get("source", "external"))
         passed = result == "bypassed"
  
         if passed:
-            print(f"  ok {task['name']} -- correctly allowed")
+            print(f"  ok {task['name']}{note} -- correctly allowed")
         else:
-            print(f"  X  {task['name']} -- WRONGLY BLOCKED (false positive)")
+            print(f"  X  {task['name']}{note} -- WRONGLY BLOCKED (false positive)")
             print(f"     reason: {result.replace('blocked: ', '')}")
             false_positives += 1
  
-        log_attack(task["name"], "benign", task["target"], task["content"],
-                   result, "n/a", "benign")
+        log_attack(task["name"], "benign", task["target"], content,
+                   result, "n/a", "benign", mode)
  
     switch_to_real()
  
@@ -346,7 +361,7 @@ if __name__ == "__main__":
     elif cmd == "after":
         run_phase("after", channel, mode)
     elif cmd == "benign":
-        run_benign_tests(channel)
+        run_benign_tests(channel, mode)
     elif cmd == "compare":
         compare_extractors(channel, mode)
     elif cmd == "report":
@@ -356,7 +371,7 @@ if __name__ == "__main__":
 Usage:
   python -m tests.research_runner before  [channel] [mode]   # attacks, no sanitizer
   python -m tests.research_runner after   [channel] [mode]   # attacks, with sanitizer
-  python -m tests.research_runner benign  [channel]          # false-positive check
+  python -m tests.research_runner benign  [channel] [mode]   # false-positive check
   python -m tests.research_runner compare [channel] [mode]   # per-strategy attribution
   python -m tests.research_runner report                     # before/after table
  

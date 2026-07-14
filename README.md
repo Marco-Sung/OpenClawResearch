@@ -40,7 +40,7 @@ Run from the repo root so the `tests`, `defenses`, and `tools` packages resolve:
 ```
 python -m tests.research_runner before  [channel] [mode]   # attacks, no sanitizer
 python -m tests.research_runner after   [channel] [mode]   # attacks, with sanitizer
-python -m tests.research_runner benign  [channel]          # false-positive check
+python -m tests.research_runner benign  [channel] [mode]   # false-positive check
 python -m tests.research_runner compare [channel] [mode]   # per-strategy attribution
 python -m tests.research_runner report                     # before/after table
 
