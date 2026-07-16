@@ -19,6 +19,15 @@ tests/transport/dropbox/
 *token*
 secrets*
 credentials*
+# ...but DO allow the secret-free template to be shared:
+!.env.example
  
 # -- mailpit data (only if you add a persistent volume) --
 mailpit-data/
+.llm_cache.json
+
+# -- Claude Code local settings (per-developer, not shared) --
+.claude/settings.local.json
+
+# -- personal reference/planning docs, not part of the graded deliverable --
+docs/
