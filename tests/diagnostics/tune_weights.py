@@ -42,6 +42,7 @@ PARSER_STRIPPED = {
     "email_hard_html_comment_in_part",      # bs4_get_text drops comment nodes
     "file_hard_pdf_hardened_check",         # pdf_color_filtered drops white text
     "file_pdf_color_filter_gap",            # pdf_color_filtered drops white text
+    "web_extreme_css_class_only_hardened",  # css_aware drops the stylesheet-hidden class (step 4)
 }
 
 ATTACKS = CORE_A + EMAIL_A + WEB_A + FILE_A

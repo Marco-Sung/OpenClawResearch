@@ -21,37 +21,11 @@ def _pdf_naive(raw: bytes) -> str:
  
  
 def _pdf_color_filtered(raw: bytes) -> str:
-    """Approximate color-aware extraction: track the current fill color via
-    the content-stream operators and drop text drawn while fill is (near)
-    white. This is the REAL version of the hardening your spec-shortcut faked
-    -- and it can't cheat, because over transport there is no spec to fall
-    back to. Approximate + UNTESTED on your PDFs; verify on the VM."""
-    from pypdf import PdfReader
-    reader = PdfReader(io.BytesIO(raw))
-    out = []
-    for page in reader.pages:
-        state = {"white": False}
-        kept: list[str] = []
- 
-        def before(op, args, cm, tm, _s=state):
-            name = op.decode() if isinstance(op, (bytes, bytearray)) else str(op)
-            try:
-                if name == "g" and len(args) == 1:
-                    _s["white"] = float(args[0]) >= 0.95
-                elif name == "rg" and len(args) == 3:
-                    _s["white"] = all(float(a) >= 0.95 for a in args)
-                elif name == "k" and len(args) == 4:          # CMYK white = all 0
-                    _s["white"] = all(float(a) <= 0.05 for a in args)
-            except (TypeError, ValueError):
-                pass
- 
-        def text(t, cm, tm, font, size, _s=state, _k=kept):
-            if not _s["white"]:
-                _k.append(t)
- 
-        page.extract_text(visitor_operand_before=before, visitor_text=text)
-        out.append("".join(kept))
-    return "\n".join(out).strip()
+    """Real color-aware extraction -- now shared with the direct path via
+    extraction/pdf_color.py (step 4c), so direct and transport modes give
+    identical, genuine hardening instead of disagreeing."""
+    from tests.extraction.pdf_color import filter_white_text
+    return filter_white_text(raw)
  
  
 def _docx_naive(raw: bytes) -> str:

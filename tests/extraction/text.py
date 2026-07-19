@@ -90,6 +90,60 @@ def extract_html_bs4_visible_only(html: str) -> str:
     return re.sub(r"\s+", " ", soup.get_text(separator=" ")).strip()
  
  
+def extract_html_css_aware(html: str) -> str:
+    """CSS-AWARE strategy (step 4): bs4_visible_only only drops elements
+    hidden via an INLINE style="" attribute. It does NOT parse <style>
+    blocks, so an attacker hiding a payload via a stylesheet CLASS/ID
+    selector (e.g. `<style>.note{display:none}</style>` + a plain
+    `<div class="note">`, no inline style at all) slips straight through
+    it. This extractor closes that gap: it parses embedded <style> block
+    rules with a regex, resolves which elements each hidden selector
+    matches using BeautifulSoup's real CSS selector engine (soupsieve,
+    already a bs4 dependency, via .select()), and drops those elements --
+    on top of the same inline-style/off-screen check bs4_visible_only
+    already does.
+
+    Scope limits, documented rather than silently assumed away: external
+    stylesheets (`<link rel=stylesheet href=...>` pointing off-page) are
+    NOT fetched or parsed, so hiding via an external CSS file still
+    survives here. Selectors bs4/soupsieve can't parse (e.g. inside an
+    `@media` block, or a combinator soupsieve doesn't support) are
+    skipped rather than raising, so unusual CSS degrades to "not caught"
+    rather than crashing extraction."""
+    if not _BS4_AVAILABLE:
+        raise RuntimeError("beautifulsoup4 not installed - add it to requirements.txt")
+    soup = BeautifulSoup(html, "html.parser")
+
+    for c in soup.find_all(string=lambda s: isinstance(s, Comment)):
+        c.extract()
+
+    hide_rule = re.compile(r"display\s*:\s*none|visibility\s*:\s*hidden", re.IGNORECASE)
+    hidden_selectors = []
+    for style_tag in soup.find_all("style"):
+        css_text = style_tag.string or ""
+        for selector_group, decls in re.findall(r"([^{}]+)\{([^{}]*)\}", css_text):
+            if hide_rule.search(decls):
+                hidden_selectors.extend(
+                    s.strip() for s in selector_group.split(",") if s.strip()
+                )
+
+    for selector in hidden_selectors:
+        try:
+            for el in soup.select(selector):
+                el.extract()
+        except Exception:
+            continue  # selector soupsieve can't parse -- skip, don't crash
+
+    inline_hidden = re.compile(
+        r"display\s*:\s*none|visibility\s*:\s*hidden|left\s*:\s*-\d{3,}",
+        re.IGNORECASE,
+    )
+    for el in soup.find_all(style=inline_hidden):
+        el.extract()
+
+    return re.sub(r"\s+", " ", soup.get_text(separator=" ")).strip()
+
+
 # ── EMAIL (MIME) EXTRACTORS ───────────────────────────────────────
  
 def extract_email_plaintext_only(raw_email: str) -> str:
@@ -139,6 +193,7 @@ HTML_EXTRACTORS = {
     "naive_regex": extract_html_naive_regex,
     "bs4_get_text": extract_html_bs4_get_text,
     "bs4_visible_only": extract_html_bs4_visible_only,
+    "css_aware": extract_html_css_aware,
 }
  
 EMAIL_EXTRACTORS = {

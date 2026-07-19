@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 attack_log.json
+results/
 .env
 # -- generated attack artifacts (rebuilt every transport run) --
 tests/transport/out/
@@ -27,7 +28,9 @@ mailpit-data/
 .llm_cache.json
 
 # -- Claude Code local settings (per-developer, not shared) --
-.claude/settings.local.json
+.claude/
 
 # -- personal reference/planning docs, not part of the graded deliverable --
 docs/
+
+two_agent/repeat_runs.sh

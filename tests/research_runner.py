@@ -308,12 +308,16 @@ def print_report():
  
 # -- EXTRACTOR COMPARISON ------------------------------------------
  
-def compare_extractors(channel="web", mode="direct"):
+def compare_extractors(channel="web", mode="direct", config="full"):
     """
     Runs EVERY extractable attack through ALL relevant extraction strategies,
-    then checks each result against the sanitizer. With mode=transport the
-    content is first routed through the real channel, so a divergence between
-    direct and transport isolates the TRANSPORT layer from the PARSER layer.
+    then checks each result against the chosen defense config (default
+    "full", preserving prior behavior). With mode=transport the content is
+    first routed through the real channel, so a divergence between direct
+    and transport isolates the TRANSPORT layer from the PARSER layer.
+    Passing a different config (e.g. "risk") answers a different question:
+    given what a parser lets through, does a STRONGER defense still catch
+    it -- separating "did extraction fail" from "did the defense also fail."
     """
     attacks = ATTACK_SETS[channel]
     raw_attacks = [a for a in attacks if "raw" in a]
@@ -326,8 +330,8 @@ def compare_extractors(channel="web", mode="direct"):
     from tests.extraction.text import HTML_EXTRACTORS, EMAIL_EXTRACTORS
  
     print(f"\n{'='*78}")
-    print(f"  EXTRACTOR COMPARISON -- {channel}   (mode: {mode})")
-    print(f"  For each attack, every extraction strategy's result vs sanitizer.")
+    print(f"  EXTRACTOR COMPARISON -- {channel}   (mode: {mode}, config: {config})")
+    print(f"  For each attack, every extraction strategy's result vs the '{config}' defense.")
     print(f"{'='*78}")
  
     def _run_and_report(attack, strategies, extract_call):
@@ -340,13 +344,17 @@ def compare_extractors(channel="web", mode="direct"):
             except Exception as e:
                 print(f"    {strat_name:<22} ERROR: {e}")
                 continue
-            verdict = safe_write(attack["target"], extracted, attack.get("source", "external"))
-            blocked = verdict.startswith("blocked")
+            verdict = safe_write(attack["target"], extracted, attack.get("source", "external"), config)
             marker = "(assigned)" if strat_name == assigned else ""
             if not extracted.strip():
                 outcome = "EXTRACTION EMPTY (nothing to write)"
-            elif blocked:
+            elif verdict.startswith("blocked"):
                 outcome = f"BLOCKED -- {verdict.replace('blocked: ', '')}"
+            elif verdict.startswith("confirm"):
+                # Three-way defenses (risk/risk_llm): not a clean pass -- a
+                # human would still review this, so it must not read as
+                # "bypassed" the way a hard ALLOW does.
+                outcome = f"CONFIRM (needs human) -- {verdict.replace('confirm: ', '')}"
             else:
                 outcome = "BYPASSED sanitizer"
             print(f"    {strat_name:<22} {outcome} {marker}")
@@ -398,7 +406,7 @@ if __name__ == "__main__":
     elif cmd == "benign":
         run_benign_tests(channel, mode, config)
     elif cmd == "compare":
-        compare_extractors(channel, mode)
+        compare_extractors(channel, mode, config)
     elif cmd == "report":
         print_report()
     else:

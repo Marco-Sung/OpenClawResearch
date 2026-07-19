@@ -5,3 +5,8 @@ python-docx>=1.1
 # risk_llm classifier (optional; the offline "risk" config works without these)
 anthropic>=0.40
 python-dotenv>=1.0
+
+# step 5 two/three-agent system (two_agent/) ONLY -- not needed for anything
+# else in this repo. See two_agent/README.md.
+google-genai>=2.0
+openai>=2.0

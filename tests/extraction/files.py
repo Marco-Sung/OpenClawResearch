@@ -74,19 +74,17 @@ def extract_pdf_naive(spec: dict) -> str:
  
  
 def extract_pdf_color_filtered(spec: dict) -> str:
-    """HARDENED (approximate): this is a STAND-IN showing the intent of
-    a color-aware extractor. A true implementation would inspect each
-    text run's fill color in the PDF content stream and drop
-    white/near-white runs. pypdf doesn't expose per-run color simply,
-    so here we approximate by rebuilding from the spec's visible-only
-    text. In a real connector you'd parse the content stream or
-    render+OCR (see note). Flagged clearly so you don't mistake the
-    approximation for a real color-parse.
- 
-    NOTE: the honest 'what a human sees' version is render-to-image +
-    OCR (pdf2image + pytesseract), which needs system poppler/tesseract.
-    That's the real fix; this is a spec-level shortcut for the harness."""
-    return spec.get("visible", "").strip()
+    """HARDENED: builds a real PDF (white-on-white hidden text, same as
+    pdf_naive) then parses it back with the REAL content-stream
+    color-tracking logic in extraction/pdf_color.py -- the same
+    implementation the transport path uses (see received_files.py), so
+    direct and transport modes now give identical, genuine hardening.
+    Previously this was a spec-level stand-in that returned
+    spec['visible'] directly without parsing the PDF at all; see
+    docs/week8-plan.md for the before/after on this fix."""
+    from tests.extraction.pdf_color import filter_white_text
+    pdf_bytes = _build_pdf(spec)
+    return filter_white_text(pdf_bytes)
  
  
 # ── DOCX ───────────────────────────────────────────────────────────
