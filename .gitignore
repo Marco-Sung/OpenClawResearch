@@ -34,3 +34,4 @@ mailpit-data/
 docs/
 
 two_agent/repeat_runs.sh
+two_agent/run_all_modes.sh
